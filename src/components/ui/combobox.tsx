@@ -274,7 +274,6 @@ function ComboboxChip({
 
 function ComboboxChipsInput({
   className,
-  children,
   ...props
 }: ComboboxPrimitive.Input.Props) {
   return (
@@ -283,7 +282,7 @@ function ComboboxChipsInput({
       className={cn("min-w-16 flex-1 outline-none", className)}
       {...props}
     />
-  )
+  );
 }
 
 function useComboboxAnchor() {
