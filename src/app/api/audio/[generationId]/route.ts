@@ -1,0 +1,45 @@
+import { auth } from "@clerk/nextjs/server";
+
+import { prisma } from "@/lib/db";
+import { getSignedAudioUrl } from "@/lib/r2";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ generationId: string }> }
+) {
+    const { generationId } = await params;
+    const { orgId, userId } = await auth();
+
+    if (!orgId || !userId) {
+      return new Response("Unauthorized", { status: 401 });
+    }
+
+    const generation = await prisma.generation.findUnique({
+      where: {
+        id: generationId,
+        orgId,
+      }
+    });
+
+    if (!generation) {
+      return new Response("Not Found", { status: 404 });
+    }
+
+    if (!generation.r2ObjectKey) {
+      return new Response("Audio is not available yet", { status: 409 });
+    }
+
+    const signedUrl = await getSignedAudioUrl(generation.r2ObjectKey);
+    const audioResponse = await fetch(signedUrl);
+
+    if (!audioResponse.ok) {
+      return new Response("Failed to fetch audio", { status: 503 });
+    }
+
+    return new Response(audioResponse.body as BodyInit, {
+      headers: {
+        "Content-Type": "audio/wav",
+        "Cache-Control": "private, max-age=31536000",
+      },
+    });
+  }

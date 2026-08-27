@@ -45,3 +45,6 @@ next-env.d.ts
 
 /src/generated/prisma
 /scripts/system-voices
+__pycache__
+/tts-server/.venv
+/tts-server/.cache
