@@ -18,7 +18,11 @@ R2_ACCESS_KEY_ID = os.getenv("R2_ACCESS_KEY_ID", "")
 R2_SECRET_ACCESS_KEY = os.getenv("R2_SECRET_ACCESS_KEY", "")
 R2_BUCKET_NAME = os.getenv("R2_BUCKET_NAME", "resonance-app")
 
-CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "voices"
+if os.name == "nt":
+    CACHE_DIR = Path(__file__).resolve().parent / ".cache" / "voices"
+else:
+    CACHE_DIR = Path("/tmp/resonance_cache/voices")
+
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 _s3_client = None
@@ -43,9 +47,16 @@ def get_voice_file(voice_key: str) -> Path:
     Downloads voice audio from Cloudflare R2 if not already in local cache.
     Returns the local Path to the audio file.
     """
-    # Normalize key to safe local path
+    # Normalize key to safe local path (and prevent path traversal)
     safe_key = voice_key.replace("\\", "/").lstrip("/")
-    local_path = CACHE_DIR / safe_key
+    if not safe_key or safe_key.endswith("/"):
+        raise ValueError("Invalid voice key")
+
+    candidate = (CACHE_DIR / safe_key).resolve()
+    if CACHE_DIR.resolve() not in candidate.parents:
+        raise ValueError("Invalid voice key")
+
+    local_path = candidate
 
     if local_path.exists() and local_path.stat().st_size > 0:
         return local_path

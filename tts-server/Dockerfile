@@ -6,7 +6,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libsndfile1 \
-    git \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install
@@ -15,15 +14,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu && \
     pip install --no-cache-dir -r requirements.txt
 
-# Hugging Face Spaces non-root user setup
-RUN useradd -m -u 1000 user
-USER user
-ENV HOME=/home/user \
-    PATH=/home/user/.local/bin:$PATH
+# Copy application source
+COPY . .
 
-COPY --chown=user:user . .
+# Set default port and listen on 0.0.0.0 for Railway
+ENV PORT=8000
+EXPOSE 8000
 
-# Hugging Face Spaces port
-EXPOSE 7860
-
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "7860"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
