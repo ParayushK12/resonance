@@ -1,0 +1,8 @@
+fastapi[standard]
+uvicorn[standard]
+pydantic
+boto3
+python-dotenv
+chatterbox-tts==0.1.7
+peft==0.18.0
+torchaudio
